@@ -92,7 +92,9 @@ matrixDotDisplay:
 	la 	$t2, segment				# cargamos la direccion de segment
 loopMatrixDotDisplay:
 	lb 	$t3, ($t0)				# $t3 es un registro auxilar
-	beq 	$t3, $zero, endLoopMatrixDotDisplay
+	li	$t4, 10					# $t4 tiene el ascii del salto de linea
+	beqz 	$t3, endLoopMatrixDotDisplay		# se acaba el ciclo cuando se acaba el string
+	beq	$t3, $t4, endLoopMatrixDotDisplay	# se acaba el ciclo cuando se encuentra con un salto de lina
 
 	sb 	$t3, ($t2)				# cargamos la palabra en el 
 	addi 	$t2, $t2, 1
@@ -119,83 +121,86 @@ endIfLoopMatrixDotDisplay:
 	j 	loopMatrixDotDisplay	
 	
 endLoopMatrixDotDisplay:
+	li 	$t3, 20
+	div 	$t1, $t3
+	mfhi	$t3
+	beqz	$t3, endMatrixDotDisplay
 	addi 	$sp, $sp, -4
 	sw 	$ra, 0($sp)				# empilamos $ra a la pila					
 	jal 	printSegment				# llamada
 	lw	$ra, 0($sp)				# desempilamos
 	addi	$sp, $sp, 4 
 
-	jr $ra
+endMatrixDotDisplay:
+	jr 	$ra
 	
 # Input: Un segmento de caracteres
 # Output: Se muestra en pantalla en formato matrixDotDisplay la frase que contenga el string
 printSegment:
-	la $s0, segment				#Se carga el segmento a imprimir
+	la 	$s0, segment				#Se carga el segmento a imprimir
 	
-	li $s2, 0
-	la $s7, A					#Se almacena la direccion inicial del alfabeto para calculo de direcciones
+	li 	$s2, 0
+	la 	$s7, A					#Se almacena la direccion inicial del alfabeto para calculo de direcciones
 
 printSegmentLoop:
-	lb $s1, ($s0)					#Se carga la letra a imprimir
+	lb 	$s1, ($s0)					#Se carga la letra a imprimir
 	
-	subi $s3, $s1, 97				#Se calcula la direccion de la linea deseada
-	mul $s3, $s3, 5
-	add $s3, $s3, $s7
-	add $s3, $s3, $s2
+	subi 	$s3, $s1, 97				#Se calcula la direccion de la linea deseada
+	mul 	$s3, $s3, 5
+	add 	$s3, $s3, $s7
+	add 	$s3, $s3, $s2
 	
-	lb $s4, ($s3)					#Se carga la fila a imprimir	
+	lb 	$s4, ($s3)					#Se carga la fila a imprimir	
 	
-	addi $sp, $sp, -4				#Empilamos el estado del registro $ra
-	sw $ra, 0($sp)
-	jal printLine					#Llamamos a printLine
-	lw $ra, 0($sp)					#Desempilamos
-	addi $sp, $sp, 4
+	addi 	$sp, $sp, -4				#Empilamos el estado del registro $ra
+	sw 	$ra, 0($sp)
+	jal 	printLine					#Llamamos a printLine
+	lw 	$ra, 0($sp)					#Desempilamos
+	addi 	$sp, $sp, 4
 	
-	la $a0, blankSpace				#Se imprime el separador entre letras
-	li $v0, 4
+	la 	$a0, blankSpace				#Se imprime el separador entre letras
+	li 	$v0, 4
 	syscall
 	
-	addi $s0, $s0, 1				#Se avanza a la siguiente letra en el segmento
-	lb $s1, ($s0)
-	bnez $s1, printSegmentLoop			#Si la siguiente letra no es el terminador nulo se vuelve al ciclo con la misma linea
-	addi $s2, $s2, 1
-	la $s0, segment
-	la $a0, lineSkip				#Si la siguiente letra es el terminador nulo se acanza a la siguiente linea a imprimir
-	li $v0, 4
+	addi 	$s0, $s0, 1				#Se avanza a la siguiente letra en el segmento
+	lb 	$s1, ($s0)
+	bnez 	$s1, printSegmentLoop			#Si la siguiente letra no es el terminador nulo se vuelve al ciclo con la misma linea
+	addi 	$s2, $s2, 1
+	la 	$s0, segment
+	la 	$a0, lineSkip				#Si la siguiente letra es el terminador nulo se acanza a la siguiente linea a imprimir
+	li 	$v0, 4
 	syscall
-	blt $s2, 5, printSegmentLoop			#Si aun no estamos en la ultima linea se vuelve a iniciar el loop en la linea siguiente
+	blt 	$s2, 5, printSegmentLoop			#Si aun no estamos en la ultima linea se vuelve a iniciar el loop en la linea siguiente
 
-	la $a0, lineSkip
-	li $v0, 4
+	la 	$a0, lineSkip
+	li 	$v0, 4
 	syscall
 	jr	$ra					#Si ya se imrpimieron todas las lineas se imprime un lineSkip y se culmina la funcion
 
 #Input: Recibe un byte, almacenado en $s4, que representa una secuencia de asteriscos y espacios
 #Output: Imprime la serie de asteriscos y espacios acorde a los representado en el byte ingresado
 printLine:
-	li $s3, 5					#$s3 funcionara como contador del ciclo
-	li $s5, 0x10					#$s5 funcionara como mascara para ver lo que hay en cada bit del byte en $s4
+	li 	$s3, 5					#$s3 funcionara como contador del ciclo
+	li 	$s5, 0x10					#$s5 funcionara como mascara para ver lo que hay en cada bit del byte en $s4
 	
 printLineLoop:
-	and $s6, $s4, $s5
-	beqz $s6, printSpace				#Si en ese bit habia un cero, se imprime un espacio
-	la $a0, asterisk				#En caso contrario, se imprime un asterisco
-	li $v0, 4
+	and 	$s6, $s4, $s5
+	beqz 	$s6, printSpace				#Si en ese bit habia un cero, se imprime un espacio
+	la 	$a0, asterisk				#En caso contrario, se imprime un asterisco
+	li 	$v0, 4
 	syscall
 	
 continuePrintLineLoop:
-	srl $s5, $s5, 1					#Se modifica la mascara para examinar el siguiente bit
-	subi $s3, $s3, 1
-	bnez $s3, printLineLoop				#Si el contador aun no es cero se reinicia el loop
-	jr $ra						#Se culmina la llamada a funcion
+	srl 	$s5, $s5, 1					#Se modifica la mascara para examinar el siguiente bit
+	subi 	$s3, $s3, 1
+	bnez 	$s3, printLineLoop				#Si el contador aun no es cero se reinicia el loop
+	jr 	$ra						#Se culmina la llamada a funcion
 	
 printSpace:
-	la $a0, blankSpace
-	li $v0, 4
+	la 	$a0, blankSpace
+	li 	$v0, 4
 	syscall
-	j continuePrintLineLoop
-	
-	
+	j 	continuePrintLineLoop
 
 endMain:
-	li $t0, 1 
+	li 	$t0, 1 
